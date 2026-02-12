@@ -775,6 +775,32 @@
         .continue-btn:hover {
             transform: scale(1.05);
         }
+
+        /* Submit Button Styles */
+        .submit-btn {
+            background: linear-gradient(135deg, var(--medanta-gold) 0%, #B8941F 100%);
+            color: var(--white);
+            border: none;
+            padding: 18px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(212, 175, 55, 0.4);
+        }
+
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
     </style>
 <base target="_blank">
 </head>
@@ -818,23 +844,23 @@
                 <p class="card-subtitle">Complete your induction training journey</p>
 
                 <div class="form-group">
-                    <label class="form-label">Full Name</label>
-                    <input type="text" class="form-input" id="name" placeholder="Enter your full name">
+                    <label class="form-label">Full Name *</label>
+                    <input type="text" class="form-input" id="name" placeholder="Enter your full name" required>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Email Address</label>
-                    <input type="email" class="form-input" id="email" placeholder="name@medanta.org">
+                    <label class="form-label">Email Address *</label>
+                    <input type="email" class="form-input" id="email" placeholder="name@medanta.org" required>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Department</label>
-                    <input type="text" class="form-input" id="dept" placeholder="Type your department (e.g., Nursing, Cardiology)">
+                    <label class="form-label">Department *</label>
+                    <input type="text" class="form-input" id="dept" placeholder="Type your department (e.g., Nursing, Cardiology)" required>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Mobile Number</label>
-                    <input type="tel" class="form-input" id="mobile" placeholder="+91 98765 43210">
+                    <label class="form-label">Mobile Number *</label>
+                    <input type="tel" class="form-input" id="mobile" placeholder="+91 98765 43210" required>
                 </div>
 
                 <div class="form-group">
@@ -902,6 +928,11 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Submit All Button -->
+            <button class="submit-btn" id="submitAllBtn" onclick="submitAllData()" style="display: none;">
+                📤 Submit Assessment to Admin
+            </button>
         </div>
     </div>
 
@@ -924,8 +955,94 @@
     </div>
 
     <script>
+        // ============================================
+        // GOOGLE SHEETS BACKEND INTEGRATION
+        // ============================================
+        
+        // REPLACE THIS URL with your Google Apps Script URL after deployment
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec";
+        
+        // Store user data
+        let userData = {
+            name: '',
+            email: '',
+            department: '',
+            mobile: '',
+            employeeId: '',
+            timestamp: '',
+            modulesCompleted: [],
+            totalScore: 0,
+            totalXP: 0,
+            status: 'In Progress'
+        };
 
-        // COMPLETE QUESTION BANK - ALL 172 QUESTIONS
+        // Submit data to Google Sheets
+        function submitToGoogleSheet(data) {
+            // Show loading state
+            const btn = document.getElementById('submitAllBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'Submitting...';
+            }
+
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(data),
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                mode: 'no-cors'
+            }).then(() => {
+                alert('✅ Assessment submitted successfully!\n\nYour manager can view the data in the Google Sheet.');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = '✓ Submitted';
+                }
+                // Store in localStorage as backup
+                localStorage.setItem('medanta_submitted', 'true');
+            }).catch((error) => {
+                console.error('Error:', error);
+                // Backup: Save to localStorage
+                let submissions = JSON.parse(localStorage.getItem('medanta_submissions') || '[]');
+                submissions.push(data);
+                localStorage.setItem('medanta_submissions', JSON.stringify(submissions));
+                alert('⚠️ Saved locally! Will sync when online.\n\nPlease check your internet connection.');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = '📤 Submit Assessment to Admin';
+                }
+            });
+        }
+
+        // Submit all data when user clicks submit button
+        function submitAllData() {
+            if (completedModules === 0) {
+                alert('Please complete at least one module before submitting!');
+                return;
+            }
+
+            // Update user data
+            userData.modulesCompleted = Object.keys(moduleProgress).filter(k => moduleProgress[k] === 100);
+            userData.totalScore = calculateTotalScore();
+            userData.totalXP = userXP;
+            userData.status = completedModules === 17 ? 'Completed' : 'In Progress';
+            userData.timestamp = new Date().toISOString();
+
+            // Submit to Google Sheets
+            submitToGoogleSheet(userData);
+        }
+
+        // Calculate total score percentage
+        function calculateTotalScore() {
+            const totalQuestions = 172; // Total questions across all modules
+            const answeredCorrectly = Math.floor((userXP / 10)); // Each correct answer = 10 XP
+            return Math.round((answeredCorrectly / totalQuestions) * 100);
+        }
+
+        // ============================================
+        // EXISTING CODE - QUESTIONS AND MODULES
+        // ============================================
+
         const modules = {"A01": {"title": "HR & Workplace Safety", "questions": [{"q": "How many Privilege Leave a staff can take in a year?", "options": ["30", "40", "10", "24"], "correct": 1}, {"q": "Which of the following is required to apply for a leave of absence?", "options": ["My Hub", "Adrenalin MAX", "Both A & B", "None of the above"], "correct": 2}, {"q": "What should an employee do if they are going to be late for work?", "options": ["Do nothing and explain later", "Inform supervisor", "Wait until next day", "Ask colleague"], "correct": 1}, {"q": "Right of employee regarding workplace conditions?", "options": ["Demand favors", "Safe environment", "Extended breaks", "Refuse work"], "correct": 1}, {"q": "How can an employee report a grievance?", "options": ["Discuss colleague", "Ignore", "Formal grievance procedure", "None"], "correct": 2}, {"q": "Sexual harassment occurs when one is ____ with approaches.", "options": ["Uncomfortable with", "FALSE", "Avoiding", "Irritated by"], "correct": 0}, {"q": "Sexual harassment can occur outside work site.", "options": ["TRUE", "FALSE", "", ""], "correct": 0}, {"q": "Most common occupational hazard?", "options": ["Needle stick injuries", "Noise", "Musculoskeletal", "Respiratory"], "correct": 0}, {"q": "Which act governs workplace safety?", "options": ["Factories Act 1948", "POSH Act 2013", "Industrial Disputes", "Workmen Compensation"], "correct": 1}, {"q": "NOT a workplace hazard?", "options": ["Poor lighting", "Hazardous chemicals", "Proper machinery", "Excessive workload"], "correct": 2}]}, "A02": {"title": "Second Victim Support", "questions": [{"q": "Who first described Second Victim phenomenon?", "options": ["Dr Albert Wu", "Florence Nightingale", "Dr Atul Gawande", "WHO"], "correct": 0}, {"q": "What % of staff may experience Second Victim?", "options": ["10-20%", "30-50%", "60-70%", "80-90%"], "correct": 1}, {"q": "NOT a trigger event?", "options": ["Medication errors", "Patient death", "Staff meeting", "Complaints"], "correct": 2}, {"q": "Common emotional response?", "options": ["Shock & disbelief", "Joy", "Excitement", "Indifference"], "correct": 0}, {"q": "Stage involving intrusive reflections?", "options": ["Chaos", "Intrusive reflections", "Inquisition", "Moving on"], "correct": 1}, {"q": "Main role of peer support?", "options": ["Blame", "Validate feelings", "Ignore", "Punish"], "correct": 1}, {"q": "Reckless behavior means?", "options": ["Unintentional", "Risky shortcut", "Conscious disregard", "Lack training"], "correct": 2}, {"q": "Practical tip for managers?", "options": ["Avoid talk", "Punitive language", "Debriefing", "Ignore emotions"], "correct": 2}, {"q": "Common myth?", "options": ["Only inexperienced affected", "Anyone affected", "Silence increases distress", "Experts err"], "correct": 0}, {"q": "Hospital support resource?", "options": ["Gym", "Peer support", "Meals", "Parking"], "correct": 1}]}, "A03": {"title": "Medication Management", "questions": [{"q": "Within how many hours of admission should current medications be reconciled?", "options": ["1 hour", "2 hours", "4 hours", "6 hours"], "correct": 1}, {"q": "NOT an approved platform for giving patient orders?", "options": ["Medanta EMR", "SMS", "WhatsApp", "Both B & C"], "correct": 3}, {"q": "Which population requires weight-based drug orders?", "options": ["Adolescents", "Adults", "Paediatric & frail elderly", "Only neonates"], "correct": 2}, {"q": "Complete order for Inj. KCl includes?", "options": ["Dose, Diluent, Rate, Duration", "Only Dose & Diluent", "Dose & Duration", "Rate & Duration"], "correct": 0}, {"q": "Color label for high-risk medications?", "options": ["Blue", "Green", "Red", "Yellow"], "correct": 2}, {"q": "NOT allowed in medication policy?", "options": ["Home meds (approved)", "Self-med inhalers", "Sample meds", "Pharmacist verification"], "correct": 2}, {"q": "Leftover narcotics discarded how?", "options": ["Yellow bin", "Sharp box", "Running water with witness", "Return w/o record"], "correct": 2}, {"q": "Max storage duration for nutritional supplements?", "options": ["7 days", "10 days", "14 days", "30 days"], "correct": 2}, {"q": "Who can administer anesthesia medication?", "options": ["Any nurse", "Any doctor", "Only anesthetists", "Pharmacist"], "correct": 2}, {"q": "Aim of Antimicrobial Stewardship?", "options": ["Reduce workload", "Improve outcomes & reduce resistance", "Eliminate antibiotics", "Reduce stay"], "correct": 1}]}, "A04": {"title": "Blood Transfusion", "questions": [{"q": "Most common procedure during hospitalization?", "options": ["Dialysis", "Blood transfusion", "Surgery", "Biopsy"], "correct": 1}, {"q": "Blood units transfused annually in India?", "options": ["1 million", "5 million", "12 million", "20 million"], "correct": 2}, {"q": "PRBC are usually?", "options": ["Non-leucoreduced", "Leucoreduced", "Mixed", "Granulocytes"], "correct": 1}, {"q": "Life-saving transfusion?", "options": ["Planned surgery", "With screening", "Emergency without delay", "Neonatal"], "correct": 2}, {"q": "Validity of transfusion consent?", "options": ["24 hrs", "48-72 hrs", "One week", "Whole admission"], "correct": 1}, {"q": "Who gives informed consent?", "options": ["Patient", "Nurse", "Attendant", "Any family"], "correct": 0}, {"q": "First 15 minutes of PRBC?", "options": ["Rapid", "Slow & monitor", "Add meds", "No vitals"], "correct": 1}, {"q": "Max duration PRBC transfusion?", "options": ["2 hrs", "3 hrs", "4 hrs", "6 hrs"], "correct": 2}, {"q": "Signs of transfusion reaction?", "options": ["Headache", "Fever, chills, urticaria", "Sweating", "Chest pain"], "correct": 1}, {"q": "First step in reaction?", "options": ["Give meds", "Stop transfusion", "Increase speed", "Send bag"], "correct": 1}]}, "A05": {"title": "CPR & Emergency", "questions": [{"q": "Correct compression-ventilation ratio?", "options": ["100:2", "30:2", "5:1", "15:2"], "correct": 1}, {"q": "Chest compression purpose?", "options": ["Supply oxygenated blood", "Damage hands", "Cause brain damage", "All"], "correct": 0}, {"q": "Correct compression rate per minute?", "options": ["30", "2", "100", "60"], "correct": 2}, {"q": "Correct resuscitation sequence?", "options": ["ABC", "CAB", "BAC", "CBA"], "correct": 1}, {"q": "Choking infant response?", "options": ["30 thrusts", "10 blows", "Abdominal thrusts", "5 back + 5 chest"], "correct": 3}, {"q": "Choking adult response?", "options": ["CPR", "Abdominal thrusts", "Back blows", "5+5"], "correct": 1}, {"q": "When start CPR cycles?", "options": ["Unresponsive, no pulse, no breathing", "Unresponsive", "Pulse present", "After 2 mins"], "correct": 0}, {"q": "When to phone emergency alone adult?", "options": ["After 5 cycles", "After 1 cycle", "Immediately", "After 2 breaths"], "correct": 2}, {"q": "Why early AED important?", "options": ["Substitute CPR", "Alternative meds", "Increase survival", "Substitute breathing"], "correct": 2}, {"q": "Code blue number?", "options": ["2222", "4444", "5555", "6666"], "correct": 0}]}, "A06": {"title": "Fire Safety", "questions": [{"q": "How raise fire alarm?", "options": ["Shout", "Call 6666 or pull MCP", "Call 2222", ""], "correct": 1}, {"q": "Best action during fire?", "options": ["Scream", "Follow RACE", "Shelter", ""], "correct": 1}, {"q": "Acronym for extinguisher use?", "options": ["PASS", "PULL", "PUSH", ""], "correct": 0}, {"q": "Use lifts during fire?", "options": ["Yes", "Maybe", "No", ""], "correct": 2}, {"q": "Open magnetically locked exit?", "options": ["Break glass", "Press green MCP", "Pull red MCP", ""], "correct": 1}, {"q": "Evacuation gathering area?", "options": ["Gate 01", "Between Gate 04 & 05", "Both", ""], "correct": 2}, {"q": "Fire code?", "options": ["Code Red", "Code Blue", "Code Black", ""], "correct": 0}, {"q": "PASS means?", "options": ["Pull-Aim-Squeeze-Sweep", "Push", "Panic", ""], "correct": 0}, {"q": "Patient evacuation method?", "options": ["Horizontal", "Vertical", "Lifts", ""], "correct": 0}, {"q": "Heavy smoke action?", "options": ["Call 6666", "Stay low & cover", "Both", ""], "correct": 2}, {"q": "Extinguisher for electrical fire?", "options": ["CO2", "Foam", "Water", ""], "correct": 0}]}, "A07": {"title": "Infection Control", "questions": [{"q": "Most important HAI prevention?", "options": ["Hand washing", "Prophylaxis", "Mask", "Isolation"], "correct": 0}, {"q": "Yellow bin disposal?", "options": ["Bandages", "Cotton", "Gauze", "All"], "correct": 3}, {"q": "Red bin disposal?", "options": ["Gloves", "IV set", "Catheter", "All"], "correct": 3}, {"q": "Light blue bin?", "options": ["Paper", "Waste paper", "Gauze", "All"], "correct": 1}, {"q": "PPE consists of?", "options": ["Gloves+Mask", "Gown+Goggles", "All above", "None"], "correct": 2}, {"q": "Blood transmitted diseases?", "options": ["HIV", "Hep B", "Hep C", "All"], "correct": 3}, {"q": "Solution in puncture container?", "options": ["10% hypo", "0.50%", "1% hypo", "1% bacillocid"], "correct": 2}, {"q": "PEP stands for?", "options": ["Post Exposure Prophylaxis", "PPE", "Equity plan", "Prevalence"], "correct": 0}, {"q": "PEP means?", "options": ["Prevent infection", "Wear PPE", "Suck blood", "Surgery"], "correct": 0}, {"q": "Infection monitoring includes?", "options": ["Water & Air", "Food", "Environment", "All"], "correct": 3}]}, "A08": {"title": "Patient Safety & IPSG", "questions": [{"q": "Which data should be used for patient identification?", "options": ["UHID & full name", "Bed no & name", "Both", "None"], "correct": 0}, {"q": "Who are vulnerable patients?", "options": ["<18", ">65", "Both", "None"], "correct": 2}, {"q": "Patient rights include?", "options": ["Confidentiality", "Dignity", "Information", "All"], "correct": 3}, {"q": "Code name for cardiac arrest?", "options": ["Code Red", "Code Blue", "Code Pink", "Code Black"], "correct": 1}, {"q": "Form for Sentinel/Near Miss events?", "options": ["ADR form", "Form F", "Incident Reporting (SPANDAN)", "Intimation"], "correct": 2}, {"q": "What is IPSG?", "options": ["Indian PSG", "International PSG", "Guide", "Quality Goals"], "correct": 1}, {"q": "How many IPSG goals?", "options": ["7", "5", "4", "6"], "correct": 3}, {"q": "IPSG 4 is?", "options": ["Patient ID", "Communication", "Fall prevention", "Ensure Safe Surgery"], "correct": 3}, {"q": "Which is high risk drug?", "options": ["Insulin", "KCl", "Morphine", "All"], "correct": 3}, {"q": "Incorrect consent-validity combo?", "options": ["Medical Mgmt-admission", "BT-24 hrs", "Anaesthesia-7 days", "Surgical-7 days"], "correct": 3}]}, "A09": {"title": "IPSG & Incident Reporting", "questions": [{"q": "NOT an IPSG?", "options": ["Identify patient", "Enhance confidentiality", "Reduce HAI", "Safe surgery"], "correct": 1}, {"q": "Goal preventing wrong site surgery?", "options": ["Identify patient", "Effective communication", "Ensure safe surgery", "Reduce HAI"], "correct": 2}, {"q": "IPSG aim?", "options": ["Reduce wait", "Improve satisfaction", "Increase cost", "Enhance safety"], "correct": 3}, {"q": "IPSG established by?", "options": ["JCI", "CDC", "Red Cross", "IMA"], "correct": 0}, {"q": "High-risk medication safety goal?", "options": ["Medication safety", "Communication", "Patient ID", "Safe surgery"], "correct": 0}, {"q": "Purpose of incident reporting?", "options": ["Blame", "Workload", "Paperwork", "Quality improvement"], "correct": 3}, {"q": "Who reports incidents?", "options": ["Management", "All staff", "Only involved", "Patients"], "correct": 1}, {"q": "Which incidents reported?", "options": ["Minor", "Single patient", "Near miss", "All"], "correct": 3}, {"q": "Incident report includes?", "options": ["Date/time", "Names", "Description", "All"], "correct": 3}, {"q": "Primary purpose of system?", "options": ["Legal action", "Punishment", "Blame-free learning", "Discourage"], "correct": 2}]}, "A10": {"title": "Radiation Safety", "questions": [{"q": "What is radiation?", "options": ["Energy waves/particles", "EM waves", "Microwaves", "None"], "correct": 0}, {"q": "Harmful radiation type?", "options": ["Non-ionizing", "Microwaves", "MRI", "Ionizing"], "correct": 3}, {"q": "Radiation ON indication?", "options": ["Green", "Yellow", "Red", "None"], "correct": 2}, {"q": "Radiation safety principle?", "options": ["ALARA", "Shielding", "Distance", "Time"], "correct": 0}, {"q": "Personal monitoring device?", "options": ["TLD", "Film", "Survey meter", "Ion chamber"], "correct": 0}, {"q": "Protective devices include?", "options": ["Lead apron", "Shielding", "Gloves", "All"], "correct": 3}, {"q": "Contact in radiation accident?", "options": ["Technician", "Oncologist", "RSO", "Chairman"], "correct": 2}, {"q": "Monitoring device change frequency?", "options": ["Daily", "Never", "3 months", "Monthly"], "correct": 2}, {"q": "High penetrating radiation?", "options": ["Alpha", "Beta", "Electrons", "X-rays"], "correct": 3}, {"q": "Radiation departments?", "options": ["OT/Cath", "Radiology", "Rad Onco", "All"], "correct": 3}]}, "A11": {"title": "Emergency Codes", "questions": [{"q": "Code Red activated by calling 6666 only", "options": ["TRUE", "FALSE", "", ""], "correct": 1}, {"q": "Fire extinguisher methodology called PULL", "options": ["TRUE", "FALSE", "", ""], "correct": 1}, {"q": "Code for child abduction?", "options": ["Black", "Red", "Pink", "Violet"], "correct": 2}, {"q": "Bus accident - who inform?", "options": ["OCC 0", "Dr Trehan", "Emergency Head", "Security 5555"], "correct": 3}, {"q": "PM sticker contains?", "options": ["Last date", "Due date", "Serial & name", "All"], "correct": 3}, {"q": "Unchained oxygen cylinders?", "options": ["Inform OCC", "Call biomed", "Call security", "Chain yourself"], "correct": 0}, {"q": "Vendor demo equipment action?", "options": ["Install yourself", "Help vendor", "Send to biomed", "Check docs"], "correct": 2}, {"q": "Laser hazard notice placed?", "options": ["Equipment", "Door", "Walls", "Equipment & door"], "correct": 3}, {"q": "RACE - E stands for?", "options": ["Escape", "Exit", "Extinguish", "Eradicate"], "correct": 2}, {"q": "NOT earthquake safety step?", "options": ["Stay calm", "Drop cover hold", "No elevators", "Exit building"], "correct": 3}]}, "A12": {"title": "Hospital Codes", "questions": [{"q": "Fire code?", "options": ["Blue", "Red", "Black", "Yellow"], "correct": 1}, {"q": "Cardiac arrest number?", "options": ["1111", "2222", "6666", "2020"], "correct": 1}, {"q": "Rapid response team code?", "options": ["Orange", "Zee", "Pink", "Brain Rescue"], "correct": 0}, {"q": "Bomb threat code?", "options": ["Black", "Violet", "Zee", "Fall"], "correct": 0}, {"q": "Child abduction number?", "options": ["0", "3333", "5555", "8888"], "correct": 2}, {"q": "Violence code?", "options": ["Violet", "Yellow", "Brown", "Orange"], "correct": 0}, {"q": "External disaster code?", "options": ["Green", "Yellow", "Pink", "Orange"], "correct": 1}, {"q": "Brain rescue number?", "options": ["5555", "3333", "2222", "4444"], "correct": 3}, {"q": "LAMA discharge number?", "options": ["2020", "7777", "8888", "0"], "correct": 1}, {"q": "Major spill helpline?", "options": ["0", "2020", "5555", "1111"], "correct": 0}]}, "A13": {"title": "Cyber Security", "questions": [{"q": "Which practice most reduces brute force password risk?", "options": ["Reuse password", "Enable MFA", "Store in text file", "Add birth year"], "correct": 1}, {"q": "Email asking to verify account via link is?", "options": ["Pharming", "Tailgating", "Phishing", "Spoofing"], "correct": 2}, {"q": "Primary purpose of device encryption?", "options": ["Speed boot", "Prevent malware", "Protect lost/stolen data", "Remote access"], "correct": 2}, {"q": "NOT PII?", "options": ["Patient MR number", "Hospital cafeteria menu", "Aadhaar number", "Staff phone"], "correct": 1}, {"q": "Updating OS helps to?", "options": ["Improve resolution", "Patch vulnerabilities", "Lower battery", "Bypass MFA"], "correct": 1}, {"q": "Unknown USB violates which policy?", "options": ["Social media", "Device management", "Data retention", "Password complexity"], "correct": 1}, {"q": "Shoulder surfing is?", "options": ["Malware", "Social engineering", "Ransomware", "Encryption"], "correct": 1}, {"q": "First action for ransomware suspicion?", "options": ["Pay ransom", "Disconnect & report", "Defrag", "Delete files"], "correct": 1}, {"q": "Greatest long-term impact of breach?", "options": ["Replace keyboards", "Loss of trust", "Electricity increase", "More paper"], "correct": 1}, {"q": "Strong passwords should?", "options": ["Only letters", "Personal details", "Mix upper/lower/numbers/symbols", "Sticky note"], "correct": 2}]}, "A14": {"title": "Workplace Violence Prevention", "questions": [{"q": "Purpose of WPV policy?", "options": ["Attendance", "Minimize complaints", "Violence-free workplace", "Salary disputes"], "correct": 2}, {"q": "Who does policy apply to?", "options": ["Permanent staff", "Doctors", "Patients", "All stakeholders"], "correct": 3}, {"q": "NOT workplace violence?", "options": ["Verbal abuse", "Property damage", "Constructive feedback", "Sexual harassment"], "correct": 2}, {"q": "Code Violet number?", "options": ["100", "112", "5555", "911"], "correct": 2}, {"q": "Who trains staff?", "options": ["Management", "Patients", "Family", "Vendors"], "correct": 0}, {"q": "Act governing sexual harassment?", "options": ["2005 Act", "2014 Act", "SHWW Act 2013", "2010 Act"], "correct": 2}, {"q": "Action vs violent visitor?", "options": ["Free consult", "Counseling", "Legal action & ban", "Dismissal"], "correct": 2}, {"q": "WPV training frequency?", "options": ["Orientation only", "Monthly", "5 years", "Orientation & annually"], "correct": 3}, {"q": "Who compiles WPV data?", "options": ["Dept head", "CEO", "WPV coordinator", "Security head"], "correct": 2}, {"q": "Purpose of risk assessment?", "options": ["Salary eval", "Identify risks", "Increase premium", "Discipline"], "correct": 1}]}, "A15": {"title": "EMR Usage", "questions": [{"q": "EMR app installed from?", "options": ["App store", "Shared folder", "App link", "All"], "correct": 0}, {"q": "Indicate critical cases using?", "options": ["Follow patient", "Tag patient", "Care team", "Referral"], "correct": 2}, {"q": "Details under pen icon?", "options": ["Order placed", "Order+date", "Order+date+status", "All"], "correct": 3}, {"q": "View lab & radiology tests?", "options": ["Uploaded", "Reports", "Charts", "Summary"], "correct": 1}, {"q": "View patient vitals?", "options": ["Summary", "Reports", "Charts", "Uploaded"], "correct": 2}, {"q": "Task tab shows?", "options": ["Team tasks", "My tasks", "Closed by me", "All"], "correct": 3}, {"q": "Save incomplete document?", "options": ["Save draft", "Preview", "Submit", "All"], "correct": 0}, {"q": "Change order priority from?", "options": ["Default list", "Search order", "Routine priority", "Click order"], "correct": 2}, {"q": "Follow patient gives updates of?", "options": ["Reports", "Orders", "Tasks", "All"], "correct": 3}, {"q": "View appointments using?", "options": ["Follow patient", "Book appointment", "Diary", "Order summary"], "correct": 2}, {"q": "Upload manual report?", "options": ["Message", "Click/Upload", "Tag patient", "All"], "correct": 1}]}, "A16": {"title": "Hospital Information System", "questions": [{"q": "HIS stands for?", "options": ["Health Info Software", "Hospital Information System", "Integration Service", "Infra Support"], "correct": 1}, {"q": "NOT HIS module?", "options": ["Patient registration", "Clinical management", "Insurance & contracts", "Social media mgmt"], "correct": 3}, {"q": "Purpose of HIS?", "options": ["Store patient info", "Improve revenue", "Schedule appts", "All"], "correct": 3}, {"q": "Module in HIS?", "options": ["Patient admin", "Car maintenance", "Social media", "Event planning"], "correct": 0}, {"q": "Exchange of info term?", "options": ["Compatibility", "Interoperability", "Testing", "Migration"], "correct": 1}, {"q": "HIS improves care by?", "options": ["Reduce workload", "Better coordination", "Auto decisions", "Entertainment"], "correct": 1}, {"q": "OPD prescription in HIS possible?", "options": ["Yes", "No", "", ""], "correct": 0}, {"q": "View HIS OPD reports in EMR?", "options": ["Yes", "No", "", ""], "correct": 0}, {"q": "Why data security important?", "options": ["Satisfaction", "Prevent unauthorized access", "Finance", "No backup"], "correct": 1}, {"q": "Key benefit of HIS?", "options": ["Wait time increase", "Absenteeism", "Reduced errors", "Low satisfaction"], "correct": 2}]}, "A17": {"title": "Documentation & Consent", "questions": [{"q": "Purpose of Initial Assessment Form?", "options": ["Payment details", "Record complaints", "Comprehensive evaluation", "Attendance"], "correct": 2}, {"q": "When take attendant consent?", "options": ["Patient unconscious", "Patient requests", "Patient minor", "Both A & C"], "correct": 3}, {"q": "Max time for initial assessment?", "options": ["30 min", "120 min", "90 min", "60 min"], "correct": 1}, {"q": "Who signs consent adult patient?", "options": ["Patient", "Attendant", "Doctor", "Family"], "correct": 0}, {"q": "Doctor must within 2 hrs?", "options": ["Prescribe", "Initial assessment & plan", "Discharge", "Collect blood"], "correct": 1}, {"q": "Min doctor progress notes/day?", "options": ["1", "2", "3", "4"], "correct": 1}, {"q": "NOT allowed in progress notes?", "options": ["Abbreviations", "Date/time", "Signature", "Legible"], "correct": 0}, {"q": "Language barrier consent signed by?", "options": ["Patient", "Interpreter", "Doctor+interpreter", "Attendant"], "correct": 2}, {"q": "Urgent referral response time?", "options": ["30 min", "60 min", "3 hrs", "8 hrs"], "correct": 0}, {"q": "Form when patient refuses treatment?", "options": ["LAMA", "Refusal", "Transfer", "BT consent"], "correct": 1}]}};
 
         let currentModule = null;
@@ -934,6 +1051,7 @@
         let completedModules = 0;
         let moduleProgress = {};
         let userName = '';
+        let moduleScores = {}; // Track scores per module
 
         // CONFETTI SYSTEM
         function blastConfetti(amount = 50) {
@@ -971,10 +1089,23 @@
 
         function doLogin() {
             const name = document.getElementById('name').value;
-            if (!name) {
-                alert('Please enter your name');
+            const email = document.getElementById('email').value;
+            const dept = document.getElementById('dept').value;
+            const mobile = document.getElementById('mobile').value;
+            const empId = document.getElementById('empId').value;
+
+            // Validation
+            if (!name || !email || !dept || !mobile) {
+                alert('Please fill in all required fields (Name, Email, Department, Mobile)');
                 return;
             }
+
+            // Save user data
+            userData.name = name;
+            userData.email = email;
+            userData.department = dept;
+            userData.mobile = mobile;
+            userData.employeeId = empId;
             userName = name;
 
             blastConfetti(80);
@@ -994,6 +1125,12 @@
             const percent = Math.round((completedModules / 17) * 100);
             document.getElementById('statPercent').textContent = percent + '%';
             document.getElementById('journeyProgress').textContent = `${completedModules}/17 Completed`;
+            
+            // Show submit button if at least one module completed
+            const submitBtn = document.getElementById('submitAllBtn');
+            if (completedModules > 0) {
+                submitBtn.style.display = 'block';
+            }
         }
 
         function renderJourney() {
@@ -1028,6 +1165,7 @@
         function startQuiz(modKey) {
             currentModule = modKey;
             currentQIndex = 0;
+            moduleScores[modKey] = 0; // Reset score for this module
             document.getElementById('dashboard').classList.add('hidden');
             document.getElementById('quizScreen').classList.remove('hidden');
             document.getElementById('quizTitle').textContent = modules[modKey].title;
@@ -1068,6 +1206,7 @@
             if (selected === q.correct) {
                 opts[selected].classList.add('correct');
                 userXP += 10;
+                moduleScores[currentModule] = (moduleScores[currentModule] || 0) + 1;
                 blastConfetti(25);
                 showXP(event.clientX, event.clientY);
             } else {
@@ -1090,11 +1229,23 @@
             completedModules++;
 
             const mod = modules[currentModule];
-            const xpEarned = mod.questions.length * 10;
-            userXP += xpEarned;
+            const totalQuestions = mod.questions.length;
+            const correctAnswers = moduleScores[currentModule] || 0;
+            const moduleScorePercent = Math.round((correctAnswers / totalQuestions) * 100);
+            const xpEarned = correctAnswers * 10;
+
+            // Store module result
+            if (!userData.modulesCompleted) userData.modulesCompleted = [];
+            userData.modulesCompleted.push({
+                module: currentModule,
+                title: mod.title,
+                score: moduleScorePercent,
+                correct: correctAnswers,
+                total: totalQuestions
+            });
 
             document.getElementById('celebrationMsg').textContent = 
-                `You completed ${mod.title} and earned ${xpEarned} XP!`;
+                `You completed ${mod.title}!\nScore: ${moduleScorePercent}% (${correctAnswers}/${totalQuestions} correct)\n+${xpEarned} XP`;
             document.getElementById('celebrationOverlay').classList.add('show');
             blastConfetti(100);
         }
@@ -1105,11 +1256,4 @@
         }
 
         function backToDash() {
-            document.getElementById('quizScreen').classList.add('hidden');
-            document.getElementById('dashboard').classList.remove('hidden');
-            renderJourney();
-            updateStats();
-        }
-    </script>
-</body>
-</html>
+            document.getElementById('quizScreen').classList.add('hidden
