@@ -978,6 +978,63 @@
 
         // Submit data to Google Sheets
         function submitToGoogleSheet(data) {
+    const btn = document.getElementById('submitAllBtn');
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Submitting...';
+    }
+
+    // Method 1: Try fetch with cors
+    fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(result => {
+        console.log('Success:', result);
+        alert('✅ Assessment submitted successfully!\n\nYour manager can view the data in the Google Sheet.');
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = '✓ Submitted';
+        }
+        localStorage.setItem('medanta_submitted', 'true');
+    })
+    .catch(error => {
+        console.error('Fetch error:', error);
+        // Method 2: Use form submission as fallback
+        submitViaForm(data);
+    });
+}
+
+// Fallback method using form submission
+function submitViaForm(data) {
+    // Create a hidden form
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = GOOGLE_SCRIPT_URL;
+    form.target = '_blank';
+    form.style.display = 'none';
+    
+    const input = document.createElement('input');
+    input.name = 'data';
+    input.value = JSON.stringify(data);
+    form.appendChild(input);
+    
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+    
+    alert('✅ Assessment submitted!\n\nPlease close the new tab that opened and check your Google Sheet.');
+    
+    const btn = document.getElementById('submitAllBtn');
+    if (btn) {
+        btn.disabled = false;
+        btn.textContent = '✓ Submitted';
+    }
+}
             // Show loading state
             const btn = document.getElementById('submitAllBtn');
             if (btn) {
@@ -1264,5 +1321,6 @@
     </script>
 </body>
 </html>
+
 
 
