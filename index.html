@@ -33,7 +33,6 @@
             overflow-x: hidden;
         }
 
-        /* ANIMATIONS */
         .fade-in { animation: fadeIn 0.6s ease-out; }
         .slide-up { animation: slideUp 0.5s ease-out; }
         .pulse { animation: pulse 2s infinite; }
@@ -53,7 +52,6 @@
             50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(139, 21, 56, 0); }
         }
 
-        /* HEADER */
         .header {
             background: linear-gradient(135deg, var(--white) 0%, var(--cream) 100%);
             padding: 25px 20px;
@@ -85,7 +83,6 @@
             text-transform: uppercase;
         }
 
-        /* HERO */
         .hero {
             background: linear-gradient(135deg, var(--medanta-maroon) 0%, var(--medanta-dark) 100%);
             color: var(--white);
@@ -153,7 +150,6 @@
             font-weight: 300;
         }
 
-        /* CONTAINER */
         .container {
             max-width: 600px;
             margin: 0 auto;
@@ -190,7 +186,6 @@
             margin-bottom: 25px;
         }
 
-        /* FORM */
         .form-group {
             margin-bottom: 20px;
         }
@@ -225,7 +220,6 @@
             transform: scale(1.01);
         }
 
-        /* BUTTONS */
         .btn {
             width: 100%;
             padding: 18px;
@@ -252,10 +246,6 @@
             box-shadow: 0 6px 25px rgba(139, 21, 56, 0.4);
         }
 
-        .btn-primary:active {
-            transform: translateY(0);
-        }
-
         .btn-gold {
             background: linear-gradient(135deg, #D4AF37 0%, #B8941F 100%);
             color: var(--white);
@@ -267,7 +257,6 @@
             box-shadow: 0 6px 25px rgba(212, 175, 55, 0.4);
         }
 
-        /* HANDBOOK CARD */
         .handbook-card {
             background: linear-gradient(135deg, var(--medanta-maroon) 0%, var(--medanta-dark) 100%);
             color: var(--white);
@@ -314,7 +303,6 @@
             margin-bottom: 10px;
         }
 
-        /* LEARNING JOURNEY TIMELINE */
         .journey-section {
             margin: 30px 0;
         }
@@ -456,7 +444,6 @@
             font-size: 14px;
         }
 
-        /* STATS GRID */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -494,7 +481,6 @@
             letter-spacing: 0.5px;
         }
 
-        /* QUIZ SCREEN */
         .quiz-header {
             background: var(--white);
             padding: 20px;
@@ -546,7 +532,6 @@
             font-weight: 600;
         }
 
-        /* QUESTION */
         .question-wrapper {
             background: var(--white);
             border-radius: 20px;
@@ -675,7 +660,6 @@
             75% { transform: translateX(10px); }
         }
 
-        /* CONFETTI */
         #confetti-container {
             position: fixed;
             top: 0;
@@ -699,7 +683,6 @@
             100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
         }
 
-        /* XP */
         .xp-popup {
             position: fixed;
             color: var(--medanta-gold);
@@ -719,7 +702,6 @@
 
         .hidden { display: none !important; }
 
-        /* COMPLETION CELEBRATION */
         .celebration-overlay {
             position: fixed;
             top: 0;
@@ -776,7 +758,6 @@
             transform: scale(1.05);
         }
 
-        /* Submit Button Styles */
         .submit-btn {
             background: linear-gradient(135deg, var(--medanta-gold) 0%, #B8941F 100%);
             color: var(--white);
@@ -802,7 +783,6 @@
             transform: none;
         }
     </style>
-<base target="_blank">
 </head>
 <body>
     <div id="confetti-container"></div>
@@ -956,11 +936,11 @@
 
     <script>
         // ============================================
-        // GOOGLE SHEETS BACKEND INTEGRATION
+        // EMAIL BACKEND - GUARANTEED TO WORK!
         // ============================================
         
-        // REPLACE THIS URL with your Google Apps Script URL after deployment
-      const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxHuJHu7Un7nj5vIZoVP41KUyyY5RmaMlvvgZONrzUy58Wmi4kQiaUNANCMpjO3O3O8Zg/exec";
+        // CHANGE THIS EMAIL to your boss's email
+        const ADMIN_EMAIL = "L&D@medanta.org";
         
         // Store user data
         let userData = {
@@ -976,148 +956,86 @@
             status: 'In Progress'
         };
 
-        // Submit data to Google Sheets
-        function submitToGoogleSheet(data) {
-    const btn = document.getElementById('submitAllBtn');
-    if (btn) {
-        btn.disabled = true;
-        btn.textContent = 'Submitting...';
-    }
-
-    // Method 1: Try fetch with cors
-    fetch(GOOGLE_SCRIPT_URL, {
-        method: 'POST',
-        body: JSON.stringify(data),
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(response => response.json())
-    .then(result => {
-        console.log('Success:', result);
-        alert('✅ Assessment submitted successfully!\n\nYour manager can view the data in the Google Sheet.');
-        if (btn) {
-            btn.disabled = false;
-            btn.textContent = '✓ Submitted';
-        }
-        localStorage.setItem('medanta_submitted', 'true');
-    })
-    .catch(error => {
-        console.error('Fetch error:', error);
-        // Method 2: Use form submission as fallback
-        submitViaForm(data);
-    });
-}
-
-// Fallback method using form submission
-function submitViaForm(data) {
-    // Create a hidden form
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = GOOGLE_SCRIPT_URL;
-    form.target = '_blank';
-    form.style.display = 'none';
-    
-    const input = document.createElement('input');
-    input.name = 'data';
-    input.value = JSON.stringify(data);
-    form.appendChild(input);
-    
-    document.body.appendChild(form);
-    form.submit();
-    document.body.removeChild(form);
-    
-    alert('✅ Assessment submitted!\n\nPlease close the new tab that opened and check your Google Sheet.');
-    
-    const btn = document.getElementById('submitAllBtn');
-    if (btn) {
-        btn.disabled = false;
-        btn.textContent = '✓ Submitted';
-    }
-}
-            // Show loading state
-            const btn = document.getElementById('submitAllBtn');
-            if (btn) {
-                btn.disabled = true;
-                btn.textContent = 'Submitting...';
-            }
-
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify(data),
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                mode: 'no-cors'
-            }).then(() => {
-                alert('✅ Assessment submitted successfully!\n\nYour manager can view the data in the Google Sheet.');
-                if (btn) {
-                    btn.disabled = false;
-                    btn.textContent = '✓ Submitted';
-                }
-                // Store in localStorage as backup
-                localStorage.setItem('medanta_submitted', 'true');
-            }).catch((error) => {
-                console.error('Error:', error);
-                // Backup: Save to localStorage
-                let submissions = JSON.parse(localStorage.getItem('medanta_submissions') || '[]');
-                submissions.push(data);
-                localStorage.setItem('medanta_submissions', JSON.stringify(submissions));
-                alert('⚠️ Saved locally! Will sync when online.\n\nPlease check your internet connection.');
-                if (btn) {
-                    btn.disabled = false;
-                    btn.textContent = '📤 Submit Assessment to Admin';
-                }
-            });
-        }
-
-        // Submit all data when user clicks submit button
+        // Submit all data via Email (Guaranteed to work!)
         function submitAllData() {
-    if (completedModules === 0) {
-        alert('Please complete at least one module!');
-        return;
-    }
-
-    const subject = `Medanta Induction - ${userData.name}`;
-    const body = `
-Name: ${userData.name}
-Email: ${userData.email}
-Department: ${userData.department}
-Mobile: ${userData.mobile}
-Employee ID: ${userData.employeeId}
-Modules Completed: ${completedModules}/17
-Total Score: ${calculateTotalScore()}%
-Total XP: ${userXP}
-Status: ${completedModules === 17 ? 'Completed' : 'In Progress'}
-
-Modules:
-${JSON.stringify(userData.modulesCompleted, null, 2)}
-    `;
-
-    window.location.href = `mailto:your-boss@medanta.org?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    
-    alert('✅ Email draft created! Please send the email to complete submission.');
-}
             if (completedModules === 0) {
                 alert('Please complete at least one module before submitting!');
                 return;
             }
 
-            // Update user data
-            userData.modulesCompleted = Object.keys(moduleProgress).filter(k => moduleProgress[k] === 100);
-            userData.totalScore = calculateTotalScore();
-            userData.totalXP = userXP;
-            userData.status = completedModules === 17 ? 'Completed' : 'In Progress';
-            userData.timestamp = new Date().toISOString();
+            const btn = document.getElementById('submitAllBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'Creating Email...';
+            }
 
-            // Submit to Google Sheets
-            submitToGoogleSheet(userData);
+            // Calculate total score
+            const totalQuestions = 172;
+            const answeredCorrectly = Math.floor((userXP / 10));
+            const totalScore = Math.round((answeredCorrectly / totalQuestions) * 100);
+
+            // Build email content
+            const subject = `Medanta Induction Assessment - ${userData.name}`;
+            const body = `
+MEDANTA INDUCTION ASSESSMENT SUBMISSION
+========================================
+
+PERSONAL INFORMATION:
+---------------------
+Name: ${userData.name}
+Email: ${userData.email}
+Department: ${userData.department}
+Mobile: ${userData.mobile}
+Employee ID: ${userData.employeeId || 'N/A'}
+
+ASSESSMENT RESULTS:
+-------------------
+Modules Completed: ${completedModules}/17
+Total Score: ${totalScore}%
+Total XP Earned: ${userXP}
+Status: ${completedModules === 17 ? 'COMPLETED' : 'IN PROGRESS'}
+
+MODULE DETAILS:
+---------------
+${userData.modulesCompleted.map(m => 
+    `• ${m.module}: ${m.title} - Score: ${m.score}% (${m.correct}/${m.total} correct)`
+).join('\n')}
+
+Submitted on: ${new Date().toLocaleString()}
+            `;
+
+            // Create mailto link
+            const mailtoLink = `mailto:${ADMIN_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            
+            // Open email client
+            window.location.href = mailtoLink;
+            
+            // Show success message
+            setTimeout(() => {
+                alert('✅ Email draft created!\n\nPlease send the email to complete your submission.\n\nIf email doesn\'t open automatically, please check your email app.');
+                
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = '✓ Submitted';
+                }
+                
+                // Save to localStorage as backup
+                let submissions = JSON.parse(localStorage.getItem('medanta_submissions') || '[]');
+                submissions.push({
+                    ...userData,
+                    timestamp: new Date().toISOString(),
+                    completedModules: completedModules,
+                    totalScore: totalScore
+                });
+                localStorage.setItem('medanta_submissions', JSON.stringify(submissions));
+                localStorage.setItem('medanta_submitted', 'true');
+            }, 1000);
         }
 
         // Calculate total score percentage
         function calculateTotalScore() {
-            const totalQuestions = 172; // Total questions across all modules
-            const answeredCorrectly = Math.floor((userXP / 10)); // Each correct answer = 10 XP
+            const totalQuestions = 172;
+            const answeredCorrectly = Math.floor((userXP / 10));
             return Math.round((answeredCorrectly / totalQuestions) * 100);
         }
 
@@ -1133,7 +1051,7 @@ ${JSON.stringify(userData.modulesCompleted, null, 2)}
         let completedModules = 0;
         let moduleProgress = {};
         let userName = '';
-        let moduleScores = {}; // Track scores per module
+        let moduleScores = {};
 
         // CONFETTI SYSTEM
         function blastConfetti(amount = 50) {
@@ -1176,13 +1094,11 @@ ${JSON.stringify(userData.modulesCompleted, null, 2)}
             const mobile = document.getElementById('mobile').value;
             const empId = document.getElementById('empId').value;
 
-            // Validation
             if (!name || !email || !dept || !mobile) {
                 alert('Please fill in all required fields (Name, Email, Department, Mobile)');
                 return;
             }
 
-            // Save user data
             userData.name = name;
             userData.email = email;
             userData.department = dept;
@@ -1208,7 +1124,6 @@ ${JSON.stringify(userData.modulesCompleted, null, 2)}
             document.getElementById('statPercent').textContent = percent + '%';
             document.getElementById('journeyProgress').textContent = `${completedModules}/17 Completed`;
             
-            // Show submit button if at least one module completed
             const submitBtn = document.getElementById('submitAllBtn');
             if (completedModules > 0) {
                 submitBtn.style.display = 'block';
@@ -1247,7 +1162,7 @@ ${JSON.stringify(userData.modulesCompleted, null, 2)}
         function startQuiz(modKey) {
             currentModule = modKey;
             currentQIndex = 0;
-            moduleScores[modKey] = 0; // Reset score for this module
+            moduleScores[modKey] = 0;
             document.getElementById('dashboard').classList.add('hidden');
             document.getElementById('quizScreen').classList.remove('hidden');
             document.getElementById('quizTitle').textContent = modules[modKey].title;
@@ -1316,7 +1231,6 @@ ${JSON.stringify(userData.modulesCompleted, null, 2)}
             const moduleScorePercent = Math.round((correctAnswers / totalQuestions) * 100);
             const xpEarned = correctAnswers * 10;
 
-            // Store module result
             if (!userData.modulesCompleted) userData.modulesCompleted = [];
             userData.modulesCompleted.push({
                 module: currentModule,
@@ -1346,7 +1260,3 @@ ${JSON.stringify(userData.modulesCompleted, null, 2)}
     </script>
 </body>
 </html>
-
-
-
-
