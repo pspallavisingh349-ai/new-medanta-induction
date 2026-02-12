@@ -1073,6 +1073,31 @@ function submitViaForm(data) {
 
         // Submit all data when user clicks submit button
         function submitAllData() {
+    if (completedModules === 0) {
+        alert('Please complete at least one module!');
+        return;
+    }
+
+    const subject = `Medanta Induction - ${userData.name}`;
+    const body = `
+Name: ${userData.name}
+Email: ${userData.email}
+Department: ${userData.department}
+Mobile: ${userData.mobile}
+Employee ID: ${userData.employeeId}
+Modules Completed: ${completedModules}/17
+Total Score: ${calculateTotalScore()}%
+Total XP: ${userXP}
+Status: ${completedModules === 17 ? 'Completed' : 'In Progress'}
+
+Modules:
+${JSON.stringify(userData.modulesCompleted, null, 2)}
+    `;
+
+    window.location.href = `mailto:your-boss@medanta.org?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    
+    alert('✅ Email draft created! Please send the email to complete submission.');
+}
             if (completedModules === 0) {
                 alert('Please complete at least one module before submitting!');
                 return;
@@ -1321,6 +1346,7 @@ function submitViaForm(data) {
     </script>
 </body>
 </html>
+
 
 
 
